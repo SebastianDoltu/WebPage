@@ -1,73 +1,76 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Price Halver</title>
+    <title>Multi-Product Halver</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: sans-serif; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        input, button { padding: 15px; font-size: 16px; }
-        #display { font-weight: bold; margin-top: 20px; }
+        body { font-family: sans-serif; padding: 20px; }
+        .product-card { border: 1px solid #ccc; padding: 15px; margin-bottom: 10px; border-radius: 8px; }
+        input, button { padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box; }
     </style>
 </head>
-<body> 
+<body>
 
-    <h2>Product Halver</h2>
+    <h2>Add New Product</h2>
     <input type="text" id="name" placeholder="Product Name">
     <input type="number" id="price" placeholder="Starting Price">
-    <button onclick="saveData()">Initialize Product</button>
-    
-    <div id="controls" style="display:none;">
-        <h3 id="productTitle"></h3>
-        <p>Current Price: $<span id="currentPrice">0</span></p>
-        <button onclick="halvePrice()">Halve Price</button>
-        <p id="display"></p>
-    </div>
+    <button onclick="addProduct()">Add Product</button>
+
+    <hr>
+    <div id="productList"></div>
 
     <script>
-        let data = JSON.parse(localStorage.getItem('productData')) || { name: '', price: 0, count: 0, lastDate: new Date().toDateString() };
+        let products = JSON.parse(localStorage.getItem('products')) || [];
 
-        function checkMissedDays() {
-            let today = new Date();
-            let lastDate = new Date(data.lastDate);
-            let diffDays = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+        function addProduct() {
+            let name = document.getElementById('name').value;
+            let price = parseFloat(document.getElementById('price').value);
+            if (!name || !price) return;
 
-            if (diffDays > 0 && data.name !== '') {
-                for(let i = 0; i < diffDays; i++) {
-                    data.price /= 2;
-                    data.count += 1;
-                }
-                data.lastDate = today.toDateString();
-                localStorage.setItem('productData', JSON.stringify(data));
-                updateUI();
-            }
+            products.push({ name, price, count: 0, lastDate: new Date().toDateString() });
+            saveAndRender();
         }
 
-        function saveData() {
-            data.name = document.getElementById('name').value;
-            data.price = parseFloat(document.getElementById('price').value);
-            data.count = 0;
-            data.lastDate = new Date().toDateString();
-            localStorage.setItem('productData', JSON.stringify(data));
-            document.getElementById('controls').style.display = 'block';
-            updateUI();
+        function halvePrice(index) {
+            products[index].price /= 2;
+            products[index].count += 1;
+            products[index].lastDate = new Date().toDateString();
+            saveAndRender();
         }
 
-        function halvePrice() {
-            data.price /= 2;
-            data.count += 1;
-            data.lastDate = new Date().toDateString();
-            localStorage.setItem('productData', JSON.stringify(data));
-            updateUI();
+        function resetProduct(index) {
+            products.splice(index, 1);
+            saveAndRender();
         }
 
-        function updateUI() {
-            document.getElementById('productTitle').innerText = data.name;
-            document.getElementById('currentPrice').innerText = data.price.toFixed(2);
-            document.getElementById('display').innerText = `You have used ${data.name} ${data.count} times.`;
-            document.getElementById('controls').style.display = 'block';
+        function saveAndRender() {
+            localStorage.setItem('products', JSON.stringify(products));
+            render();
         }
 
-        window.onload = checkMissedDays;
+        function render() {
+            let list = document.getElementById('productList');
+            list.innerHTML = '';
+            products.forEach((p, i) => {
+                list.innerHTML += `
+                    <div class="product-card">
+                        <h3>${p.name}</h3>
+                        <p>Price: $${p.price.toFixed(2)}</p>
+                        <p>Used: ${p.count} times</p>
+                        <button onclick="halvePrice(${i})">Halve Price</button>
+                        <button onclick="resetProduct(${i})" style="background:#ffcccc;">Delete Product</button>
+                    </div>
+                `;
+            });
+        }
+
+        // Automatic catch-up for all products
+        products.forEach(p => {
+            let diff = Math.floor((new Date() - new Date(p.lastDate)) / (1000 * 60 * 60 * 24));
+            for(let i = 0; i < diff; i++) { p.price /= 2; p.count += 1; }
+            p.lastDate = new Date().toDateString();
+        });
+        render();
     </script>
 </body>
 </html>
