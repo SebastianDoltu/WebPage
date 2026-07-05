@@ -18,7 +18,7 @@
 <body>
     <h2>Product Dashboard</h2>
     <input id="n" placeholder="Product Name">
-    <input id="p" type="number" placeholder="Initial Price">
+    <input id="p" type="number" placeholder="Initial Price (£)">
     <button class="btn-main" onclick="add()">Add Product</button>
     <div id="list"></div>
 
@@ -29,7 +29,6 @@
             let n = document.getElementById('n').value;
             let p = parseFloat(document.getElementById('p').value);
             if (!n || isNaN(p)) return;
-            // Start count at 0
             data.push({ name: n, initialPrice: p, count: 0 });
             saveAndRender();
         }
@@ -61,7 +60,7 @@
 
         function render() {
             document.getElementById('list').innerHTML = data.map((item, i) => {
-                // If count is 0, price is 100%. If count is 1, price is 50%, 2 is 33%, etc.
+                // Divisor calculation: 0 or 1 usages = 100% price. 2 usages = 50%, 3 usages = 33%
                 let divisor = item.count === 0 ? 1 : item.count;
                 let current = item.initialPrice / divisor;
                 return `
@@ -71,8 +70,8 @@
                         <button class="btn-top delete-btn" onclick="del(${i})">Delete</button>
                     </div>
                     <h3>${item.name}</h3>
-                    <p>Initial Price: $${item.initialPrice.toFixed(2)}</p>
-                    <p>Current Price: <strong>$${current.toFixed(2)}</strong></p>
+                    <p>Initial Price: £${item.initialPrice.toFixed(2)}</p>
+                    <p>Current Price: <strong>£${current.toFixed(2)}</strong></p>
                     <p>Total Usages: <strong>${item.count}</strong></p>
                     <button class="btn-main" onclick="use(${i})">Use</button>
                 </div>
